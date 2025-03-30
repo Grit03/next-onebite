@@ -1,3 +1,7 @@
 export default function Home() {
-  return <div></div>;
+  return (
+    <div>
+      <h1>메인 화면</h1>
+    </div>
+  );
 }
