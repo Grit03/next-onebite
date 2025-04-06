@@ -8,6 +8,8 @@ import {
 } from "next";
 import style from "./[id].module.css";
 import fetchOneBook from "@/lib/fetch-one-book";
+import { useRouter } from "next/router";
+import { notFound } from "next/navigation";
 
 const mockData = {
   id: 1,
@@ -38,32 +40,37 @@ export const getStaticPaths = () => {
   return {
     // paths라는 속성으로 어떤 경로가 존재할 수 있는지를 배열로 반환
     paths: [
-      {
-        // 가능한 경로를 params라는 속성에 적어주면 된다.
-        params: {
-          // 파라미터 이름 : 값
-          // 파라미터 값은 반드시 문자열로 작성해야지 정상 작동한다.
-          id: "1",
-        },
-      },
+      { params: { id: "1" } },
       { params: { id: "2" } },
       { params: { id: "3" } },
     ],
-    // fallback은 예외 상황에 대비하는 옵션
-    // 존재하지 않는 url에 어떻게 대응할 것인지의 옵션
-    fallback: false, // not found를 반환함
+    // fallback: false, // 404 not found를 반환함
+    // fallback: "blocking", // SSR 방식
+    fallback: true, // SSR 방식 + 데이터가 없는 폴백 상태의 페이지부터 반환
   };
 };
 
 export const getStaticProps = async (context: GetStaticPropsContext) => {
   const id = context.params!.id;
   const book = await fetchOneBook(Number(id));
+
+  if (!book) {
+    return {
+      notFound: true,
+    };
+  }
+
   return { props: { book } };
 };
 
 export default function Book({
   book,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
+  const router = useRouter();
+
+  // fallback 상태에 해당할때만 보여지는 ui
+  if (router.isFallback) return "로딩중";
+
   if (!book) {
     return "문제가 발생했습니다. 다시 시도해주세요";
   }
