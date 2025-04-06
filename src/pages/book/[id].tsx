@@ -1,4 +1,11 @@
-import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import {
+  GetServerSidePropsContext,
+  GetStaticPathsContext,
+  GetStaticProps,
+  GetStaticPropsContext,
+  InferGetServerSidePropsType,
+  InferGetStaticPropsType,
+} from "next";
 import style from "./[id].module.css";
 import fetchOneBook from "@/lib/fetch-one-book";
 
@@ -14,20 +21,49 @@ const mockData = {
     "https://shopping-phinf.pstatic.net/main_3888828/38888282618.20230913071643.jpg",
 };
 
-export const getServerSideProps = async (
-  context: GetServerSidePropsContext
-) => {
-  // !로 context.params가 있을거라고 단언
-  // 이렇게 해도 안전한 이유는, 해당 페이지가 무조건 id가 있어야 접근 가능한 페이지이기 때문
+// export const getServerSideProps = async (
+//   context: GetServerSidePropsContext
+// ) => {
+//   // !로 context.params가 있을거라고 단언
+//   // 이렇게 해도 안전한 이유는, 해당 페이지가 무조건 id가 있어야 접근 가능한 페이지이기 때문
+//   const id = context.params!.id;
+//   const book = await fetchOneBook(Number(id));
+
+//   return { props: { book } };
+// };
+
+// 동적 라우트에서의 SSG
+// getStaticPath를 만들어줘야한다.
+export const getStaticPaths = () => {
+  return {
+    // paths라는 속성으로 어떤 경로가 존재할 수 있는지를 배열로 반환
+    paths: [
+      {
+        // 가능한 경로를 params라는 속성에 적어주면 된다.
+        params: {
+          // 파라미터 이름 : 값
+          // 파라미터 값은 반드시 문자열로 작성해야지 정상 작동한다.
+          id: "1",
+        },
+      },
+      { params: { id: "2" } },
+      { params: { id: "3" } },
+    ],
+    // fallback은 예외 상황에 대비하는 옵션
+    // 존재하지 않는 url에 어떻게 대응할 것인지의 옵션
+    fallback: false, // not found를 반환함
+  };
+};
+
+export const getStaticProps = async (context: GetStaticPropsContext) => {
   const id = context.params!.id;
   const book = await fetchOneBook(Number(id));
-
   return { props: { book } };
 };
 
 export default function Book({
   book,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+}: InferGetStaticPropsType<typeof getStaticProps>) {
   if (!book) {
     return "문제가 발생했습니다. 다시 시도해주세요";
   }
